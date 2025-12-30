@@ -326,6 +326,7 @@ h2::before {
 <!-- background decorative layers -->
 <div class="noise-overlay"></div>
 <div class="sakura-container" id="sakura-container"></div>
+<button id="reset-btn" class="sakura-btn" style="right:70px" onclick="resetProgress()" aria-label="Reset Progress" title="Reset All Progress">↺</button>
 <button id="sakura-toggle" class="sakura-btn" onclick="toggleSakura()" aria-label="Toggle Sakura Animation" title="Toggle Petals">🌸</button>
 
 <div class="header">
@@ -545,6 +546,17 @@ function toggleSakura() {
     container.style.display = 'none';
     btn.classList.add('sakura-off');
     localStorage.setItem('sakura_enabled', 'false');
+  }
+}
+
+function resetProgress() {
+  if(confirm("Are you sure you want to reset all syllabus progress? This cannot be undone.")) {
+    document.querySelectorAll("input[type=checkbox]").forEach(cb => {
+      cb.checked = false;
+      localStorage.removeItem(cb.id);
+    });
+    updateAll();
+    suggestNext();
   }
 }
 
