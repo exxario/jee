@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+﻿﻿<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="utf-8" />
@@ -319,6 +319,27 @@ h2::before {
 }
 .sakura-btn:hover { background: rgba(255, 255, 255, 0.2); transform: rotate(90deg); }
 .sakura-off { opacity: 0.5; filter: grayscale(1); }
+
+/* Countdown Timer */
+.timer-wrapper { margin-left: auto; text-align: right; }
+.timer-display {
+  font-family: 'Outfit', monospace;
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #ffc1cc;
+  background: rgba(0, 0, 0, 0.3);
+  padding: 6px 14px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 77, 77, 0.3);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+}
+.timer-unit { color: #cbd5e1; font-size: 0.8rem; font-weight: 400; margin-right: 4px; }
+.timer-label { font-size: 0.75rem; color: rgba(255,255,255,0.6); margin-top: 4px; }
+
+@media (max-width: 700px) {
+  .header { flex-direction: column; align-items: flex-start; gap: 10px; }
+  .timer-wrapper { margin-left: 0; text-align: left; }
+}
 </style>
 </head>
 <body>
@@ -330,8 +351,14 @@ h2::before {
 <button id="sakura-toggle" class="sakura-btn" onclick="toggleSakura()" aria-label="Toggle Sakura Animation" title="Toggle Petals">🌸</button>
 
 <div class="header">
-  <h1> JEE Prep Dashboard </h1>
-  <div class="subtle">khud ki tracking khud kro bhai  </div>
+  <div style="display:flex; align-items:center; gap:16px; flex-wrap:wrap;">
+    <h1> JEE Prep Dashboard </h1>
+    <div class="subtle">khud ki tracking khud kro bhai</div>
+  </div>
+  <div class="timer-wrapper">
+    <div id="countdown-display" class="timer-display">Loading...</div>
+    <div class="timer-label">Target: Jan 21, 2026</div>
+  </div>
 </div>
 
 <div class="suggestion-box">
@@ -560,6 +587,29 @@ function resetProgress() {
   }
 }
 
+/* Countdown Timer Logic */
+function updateCountdown() {
+  const targetDate = new Date("January 21, 2026 00:00:00").getTime();
+  const now = new Date().getTime();
+  const distance = targetDate - now;
+
+  if (distance < 0) {
+    document.getElementById("countdown-display").innerHTML = "EXAM STARTED";
+    return;
+  }
+
+  const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+  const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+  const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+  const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+  document.getElementById("countdown-display").innerHTML = 
+    `${days}<span class="timer-unit">d</span> ` +
+    `${hours}<span class="timer-unit">h</span> ` +
+    `${minutes}<span class="timer-unit">m</span> ` +
+    `${seconds}<span class="timer-unit">s</span>`;
+}
+
 /* initialize */
 window.addEventListener('load', ()=>{
   load();
@@ -567,6 +617,9 @@ window.addEventListener('load', ()=>{
   renderTests();
   // subtle entrance animation for bars (re-trigger)
   setTimeout(()=>{ document.querySelectorAll('.progress-bar').forEach(b=> b.style.opacity=1); }, 80);
+  
+  setInterval(updateCountdown, 1000);
+  updateCountdown();
 
   // Check Sakura Preference
   if (localStorage.getItem('sakura_enabled') === 'false') {
