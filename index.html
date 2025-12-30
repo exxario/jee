@@ -304,6 +304,21 @@ h2::before {
   transition: background 0.2s;
 }
 .del-btn:hover { background: rgba(255, 77, 77, 0.2); }
+
+/* Sakura Toggle Button */
+.sakura-btn {
+  position: fixed; top: 20px; right: 20px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  width: 40px; height: 40px;
+  cursor: pointer; z-index: 100;
+  font-size: 1.2rem;
+  transition: all 0.3s ease;
+  display: flex; align-items: center; justify-content: center;
+}
+.sakura-btn:hover { background: rgba(255, 255, 255, 0.2); transform: rotate(90deg); }
+.sakura-off { opacity: 0.5; filter: grayscale(1); }
 </style>
 </head>
 <body>
@@ -311,6 +326,7 @@ h2::before {
 <!-- background decorative layers -->
 <div class="noise-overlay"></div>
 <div class="sakura-container" id="sakura-container"></div>
+<button id="sakura-toggle" class="sakura-btn" onclick="toggleSakura()" aria-label="Toggle Sakura Animation" title="Toggle Petals">🌸</button>
 
 <div class="header">
   <h1> JEE Prep Dashboard </h1>
@@ -349,6 +365,32 @@ h2::before {
 </div>
 
 <div id="syllabus-container"></div>
+
+<div class="card mock-card max-wide">
+  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+    <h3 style="margin:0; border:none; font-size:1.4rem;">Mock Test Score Tracker</h3>
+    <button onclick="addTest()" class="add-test-btn">+ Add Test</button>
+  </div>
+  
+  <div style="overflow-x:auto;">
+    <table id="test-table">
+      <thead>
+        <tr>
+          <th style="text-align:left">Date</th>
+          <th>Phy</th>
+          <th>Chem</th>
+          <th>Math</th>
+          <th>Total</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="test-list"></tbody>
+    </table>
+    <div id="no-tests-msg" style="text-align:center; padding:20px; color:rgba(255,255,255,0.5); font-style:italic; display:none;">
+      No tests added yet. Click "Add Test" to track your progress!
+    </div>
+  </div>
+</div>
 
 <script>
 /* --- data & existing logic preserved --- */
@@ -453,9 +495,9 @@ function renderTests() {
   tbody.innerHTML = tests.map((t, i) => `
     <tr style="animation: fadeIn 0.3s ease">
       <td style="color:#cbd5e1; font-size:0.9rem; text-align:left;">${t.date}</td>
-      <td><input type="number" class="score-input" value="${t.p === 0 ? '' : t.p}" placeholder="0" oninput="updateScore(${i}, 'p', this.value)"></td>
-      <td><input type="number" class="score-input" value="${t.c === 0 ? '' : t.c}" placeholder="0" oninput="updateScore(${i}, 'c', this.value)"></td>
-      <td><input type="number" class="score-input" value="${t.m === 0 ? '' : t.m}" placeholder="0" oninput="updateScore(${i}, 'm', this.value)"></td>
+      <td><input type="number" class="score-input" value="${(t.p||0) === 0 ? '' : t.p}" placeholder="0" oninput="updateScore(${i}, 'p', this.value)"></td>
+      <td><input type="number" class="score-input" value="${(t.c||0) === 0 ? '' : t.c}" placeholder="0" oninput="updateScore(${i}, 'c', this.value)"></td>
+      <td><input type="number" class="score-input" value="${(t.m||0) === 0 ? '' : t.m}" placeholder="0" oninput="updateScore(${i}, 'm', this.value)"></td>
       <td id="total-${i}" style="font-weight:bold; color:#ffc1cc; font-size:1.1rem;">${(t.p||0)+(t.c||0)+(t.m||0)}</td>
       <td><button class="del-btn" onclick="deleteTest(${i})" title="Delete">×</button></td>
     </tr>
@@ -489,6 +531,23 @@ content += renderTable("Chemistry", chemistry, "c", 0.5 + (physics.length * 0.03
 content += renderTable("Mathematics", maths, "m", 0.5 + ((physics.length + chemistry.length) * 0.03));
 container.innerHTML = content;
 
+/* Sakura Toggle Logic */
+function toggleSakura() {
+  const container = document.getElementById('sakura-container');
+  const btn = document.getElementById('sakura-toggle');
+  const isHidden = container.style.display === 'none';
+  
+  if (isHidden) {
+    container.style.display = 'block';
+    btn.classList.remove('sakura-off');
+    localStorage.setItem('sakura_enabled', 'true');
+  } else {
+    container.style.display = 'none';
+    btn.classList.add('sakura-off');
+    localStorage.setItem('sakura_enabled', 'false');
+  }
+}
+
 /* initialize */
 window.addEventListener('load', ()=>{
   load();
@@ -496,6 +555,12 @@ window.addEventListener('load', ()=>{
   renderTests();
   // subtle entrance animation for bars (re-trigger)
   setTimeout(()=>{ document.querySelectorAll('.progress-bar').forEach(b=> b.style.opacity=1); }, 80);
+
+  // Check Sakura Preference
+  if (localStorage.getItem('sakura_enabled') === 'false') {
+    document.getElementById('sakura-container').style.display = 'none';
+    document.getElementById('sakura-toggle').classList.add('sakura-off');
+  }
 
   // Generate Sakura Petals
   const sakuraContainer = document.getElementById('sakura-container');
@@ -512,32 +577,6 @@ window.addEventListener('load', ()=>{
   }
 });
 </script>
-
-<div class="card mock-card max-wide">
-  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-    <h3 style="margin:0; border:none; font-size:1.4rem;">Mock Test Score Tracker</h3>
-    <button onclick="addTest()" class="add-test-btn">+ Add Test</button>
-  </div>
-  
-  <div style="overflow-x:auto;">
-    <table id="test-table">
-      <thead>
-        <tr>
-          <th style="text-align:left">Date</th>
-          <th>Phy</th>
-          <th>Chem</th>
-          <th>Math</th>
-          <th>Total</th>
-          <th></th>
-        </tr>
-      </thead>
-      <tbody id="test-list"></tbody>
-    </table>
-    <div id="no-tests-msg" style="text-align:center; padding:20px; color:rgba(255,255,255,0.5); font-style:italic; display:none;">
-      No tests added yet. Click "Add Test" to track your progress!
-    </div>
-  </div>
-</div>
 
 </body>
 </html>
