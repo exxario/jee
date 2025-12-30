@@ -1,0 +1,543 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Ultimate JEE Tracker Pro</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;700;800&display=swap" rel="stylesheet">
+<style>
+/* --- Liquid animated gradient background + blobs --- */
+:root{
+  --bg-duration: 12s;
+  --accent-1: #ffc1cc; /* Sakura Pink */
+  --accent-2: #ff4d4d; /* Vermilion */
+  --accent-3: #e2e8f0; /* Paper White */
+  --accent-4: #1a237e; /* Indigo */
+  --card-bg: rgba(20, 25, 40, 0.75);
+  --glass: rgba(255,255,255,0.05);
+}
+html,body{height:100%;margin:0;}
+body {
+  font-family: "Outfit", sans-serif;
+  color: #e6eef6;
+  min-height:100%;
+  padding:28px;
+  /* Deep Indigo / Ink Blue Background */
+  background: radial-gradient(circle at 50% 0%, #1e293b 0%, #0f172a 100%);
+  overflow-y:auto;
+  position:relative;
+}
+
+/* Sakura Animation */
+.sakura-container {
+  position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+  pointer-events: none; z-index: -1; overflow: hidden;
+}
+.sakura {
+  position: absolute;
+  background: linear-gradient(120deg, #ffc1cc, #ffb7b2);
+  border-radius: 100% 0 100% 0;
+  opacity: 0.8;
+  animation: fall linear infinite, sway ease-in-out infinite alternate;
+  filter: blur(2px);
+}
+@keyframes fall {
+  0% { top: -10%; }
+  100% { top: 110%; }
+}
+@keyframes sway {
+  0% { transform: translateX(0) rotate(0deg); }
+  100% { transform: translateX(50px) rotate(45deg); }
+}
+
+/* Subtle noise texture for "Washi" paper feel */
+.noise-overlay {
+  position: fixed; inset: 0; z-index: -2;
+  opacity: 0.03;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+  pointer-events: none;
+}
+
+/* page header and neon title */
+.header {
+  display:flex;
+  align-items:center;
+  gap:16px;
+  margin-bottom:18px;
+  animation: slideDown 0.8s ease-out;
+}
+h1 {
+  margin:0;
+  font-size:2.5rem;
+  font-weight: 800;
+  background: linear-gradient(to right, #ffc1cc, #fff, #ff4d4d);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 0 15px rgba(255,255,255,0.3));
+}
+.subtle {
+  color: #cbd5e1;
+  font-size:0.95rem;
+  opacity:0.95;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+
+/* suggestion box */
+.suggestion-box {
+  background: rgba(255, 255, 255, 0.03);
+  border-left: 4px solid #ff4d4d;
+  padding:14px 16px;
+  margin-bottom:22px;
+  border-radius:10px;
+  box-shadow: 0 8px 30px rgba(2,6,23,0.6);
+  -webkit-backdrop-filter: blur(6px) saturate(1.1);
+  backdrop-filter: blur(6px) saturate(1.1);
+  animation: fadeIn 1s ease-out 0.3s backwards;
+}
+
+/* dashboard grid and cards */
+.dashboard {
+  display:grid;
+  grid-template-columns: repeat(auto-fit,minmax(220px,1fr));
+  gap:18px;
+  margin-bottom: 26px;
+  perspective: 1000px;
+}
+.card {
+  background: var(--card-bg);
+  border-radius:14px;
+  padding:16px;
+  position:relative;
+  overflow:hidden;
+  box-shadow: 0 8px 24px rgba(2,6,23,0.6), inset 0 1px 0 rgba(255,255,255,0.02);
+  transition: transform .28s ease, box-shadow .28s ease;
+  border: 1px solid rgba(255,255,255,0.03);
+  animation: popIn 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) backwards;
+}
+.card:hover {
+  transform: translateY(-6px) rotateX(2deg);
+  box-shadow: 0 18px 40px rgba(0,0,0,0.8), 0 0 20px rgba(255, 77, 77, 0.1);
+  border-color: rgba(255, 77, 77, 0.2);
+}
+.card::after{
+  content:'';
+  position:absolute;
+  inset: -40% -40% auto auto;
+  width:260px;height:260px;
+  background: radial-gradient(circle at 30% 30%, rgba(255, 193, 204, 0.1), transparent 30%);
+  pointer-events:none;
+  transform: translate(35%, -35%) rotate(12deg);
+  mix-blend-mode: screen;
+}
+
+/* progress container + animated gradient bar */
+.progress-container {
+  background: var(--glass);
+  border-radius:999px;
+  height:12px;
+  margin-top:10px;
+  overflow:hidden;
+  border:1px solid rgba(255,255,255,0.02);
+}
+.progress-bar {
+  height:100%;
+  width:0%;
+  transition: width .9s cubic-bezier(.2,.9,.2,1);
+  background: linear-gradient(90deg, #ffc1cc 0%, #ff4d4d 100%);
+  box-shadow: 0 6px 18px rgba(0,0,0,0.45) inset;
+  position: relative;
+}
+.progress-bar::after {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; bottom: 0; right: 0;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+  transform: translateX(-100%);
+  animation: shimmer 2s infinite;
+}
+
+/* stat percent text */
+.percent-right{ float:right; font-weight:700; color:#fff; }
+
+/* main table styles */
+table { 
+  width:100%; border-collapse:separate; border-spacing: 0 4px; 
+  margin-bottom:28px; background: transparent; 
+}
+th,td { padding:12px 15px; text-align:center; color:#dbeafe; }
+th { 
+  background: rgba(255,255,255,0.03); 
+  font-weight:600; color:#ffc1cc; 
+  text-transform: uppercase; font-size: 0.85rem; letter-spacing: 1px;
+  border-radius: 4px;
+}
+tr { transition: transform 0.2s; }
+tr td { background: rgba(255,255,255,0.015); border-top: 1px solid rgba(255,255,255,0.02); border-bottom: 1px solid rgba(255,255,255,0.02); }
+tr td:first-child { border-top-left-radius: 8px; border-bottom-left-radius: 8px; border-left: 1px solid rgba(255,255,255,0.02); }
+tr td:last-child { border-top-right-radius: 8px; border-bottom-right-radius: 8px; border-right: 1px solid rgba(255,255,255,0.02); }
+
+tr:hover td { background: rgba(255,255,255,0.05); box-shadow: 0 0 15px rgba(255,255,255,0.05); }
+tr:hover { transform: scale(1.01); }
+
+/* nicer checkbox styling (safe/modern) */
+input[type="checkbox"]{
+  appearance: none;
+  width: 18px; height: 18px;
+  border: 2px solid rgba(255,255,255,0.3);
+  border-radius: 4px;
+  cursor: pointer;
+  position: relative;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  background: rgba(0,0,0,0.2);
+  vertical-align: middle;
+}
+input[type="checkbox"]:checked {
+  background: #ff4d4d;
+  border-color: #ff4d4d;
+  box-shadow: 0 0 10px rgba(255, 77, 77, 0.4);
+}
+input[type="checkbox"]:checked::after {
+  content: '✓';
+  position: absolute;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 800;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+}
+input[type="checkbox"]:hover { border-color: #fff; transform: scale(1.1); }
+
+/* table header for subjects */
+h2 { 
+  margin-top:40px; color: #fff; font-size:1.8rem; 
+  padding-bottom:8px; border-bottom: 1px solid rgba(255,255,255,0.05);
+  display: flex; align-items: center; gap: 10px;
+}
+h2::before {
+  content: ''; display: block; width: 6px; height: 24px; 
+  background: #ff4d4d;
+  border-radius: 4px;
+}
+
+/* mock card */
+.mock-card {
+  margin-top:20px;
+  border: 1px dashed rgba(255, 77, 77, 0.3);
+  background: linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.005));
+  padding:14px;
+  border-radius:12px;
+}
+
+/* New Animations */
+@keyframes slideDown { from { transform: translateY(-30px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes slideIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes popIn { 
+  0% { transform: scale(0.8); opacity: 0; } 
+  100% { transform: scale(1); opacity: 1; } 
+}
+@keyframes shimmer {
+  100% { transform: translateX(100%); }
+}
+
+/* Stagger delays for cards */
+.dashboard .card:nth-child(1) { animation-delay: 0.1s; }
+.dashboard .card:nth-child(2) { animation-delay: 0.2s; }
+.dashboard .card:nth-child(3) { animation-delay: 0.3s; }
+.dashboard .card:nth-child(4) { animation-delay: 0.4s; }
+
+/* responsive small tweaks */
+@media (max-width:580px){
+  body{padding:14px;}
+  h1{font-size:1.45rem;}
+}
+
+/* replace inline styles used in the HTML */
+.suggest-text { margin-top: 6px; }
+
+.mock-card.max-wide { max-width: 720px; }
+.mock-card h3 { margin: 0 0 8px 0; }
+.mock-card p  { margin: 0; }
+
+/* Score Tracker Styles */
+.score-input {
+  width: 100%;
+  max-width: 60px;
+  background: rgba(0,0,0,0.2);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 6px;
+  color: #fff;
+  padding: 6px;
+  text-align: center;
+  font-family: 'Outfit', sans-serif;
+  font-size: 1rem;
+}
+.score-input:focus {
+  outline: none;
+  border-color: #ff4d4d;
+  background: rgba(0,0,0,0.4);
+}
+.add-test-btn {
+  background: linear-gradient(135deg, #ff4d4d, #d32f2f);
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(255, 77, 77, 0.3);
+  transition: all 0.2s;
+}
+.add-test-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 16px rgba(255, 77, 77, 0.4); }
+.del-btn {
+  background: rgba(255,255,255,0.05);
+  border: none;
+  color: #ff4d4d;
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.del-btn:hover { background: rgba(255, 77, 77, 0.2); }
+</style>
+</head>
+<body>
+
+<!-- background decorative layers -->
+<div class="noise-overlay"></div>
+<div class="sakura-container" id="sakura-container"></div>
+
+<div class="header">
+  <h1> JEE Prep Dashboard </h1>
+  <div class="subtle">khud ki tracking khud kro bhai  </div>
+</div>
+
+<div class="suggestion-box">
+  <strong>✨ Recommended Focus:</strong>
+  <div id="suggest-text" class="suggest-text">Loading...</div>
+</div>
+
+<div class="dashboard" role="region" aria-label="progress dashboard">
+  <div class="card">
+    <strong>Overall Progress</strong>
+    <span id="overall-percent" class="percent-right">0%</span>
+    <div class="progress-container"><div id="overall-bar" class="progress-bar"></div></div>
+  </div>
+
+  <div class="card">
+    <strong>Physics</strong>
+    <span id="p-percent" class="percent-right">0%</span>
+    <div class="progress-container"><div id="p-bar" class="progress-bar"></div></div>
+  </div>
+
+  <div class="card">
+    <strong>Chemistry</strong>
+    <span id="c-percent" class="percent-right">0%</span>
+    <div class="progress-container"><div id="c-bar" class="progress-bar"></div></div>
+  </div>
+
+  <div class="card">
+    <strong>Mathematics</strong>
+    <span id="m-percent" class="percent-right">0%</span>
+    <div class="progress-container"><div id="m-bar" class="progress-bar"></div></div>
+  </div>
+</div>
+
+<div id="syllabus-container"></div>
+
+<script>
+/* --- data & existing logic preserved --- */
+const physics = ["Units & Dimensions","Kinematics","Laws of Motion","Work Power Energy","Centre of Mass","Rotational Mechanics","Gravitation","Solids","Fluids","Thermal Prop","Thermodynamics","KTG","Oscillations","Waves","Electrostatics","Capacitance","Current Electricity","Moving Charges","Magnetism","EMI","AC","EM Waves","Ray Optics","Wave Optics","Dual Nature","Atoms","Nuclei","Semiconductors"];
+const chemistry = ["Mole Concept","Atomic Structure","Periodic Table","Chemical Bonding","Thermodynamics","Equilibrium","Redox","Coordination","d-f Block","p-Block","GOC","Isomerism","Hydrocarbons","Haloalkanes","Alcohols","Aldehydes","Amines","Biomolecules"];
+const maths = ["Basic Maths","Quadratic","Sequence & Series","P&C","Binomial","Complex No","Matrices","Determinants","Limits","Continuity","AOD","Integration","AUC","Differential Eq","Straight Line","Circle","Conics","Vectors","3D Geometry","Probability"];
+
+function save(cb) {
+  localStorage.setItem(cb.id, cb.checked);
+  updateAll();
+}
+function load() {
+  document.querySelectorAll("input[type=checkbox]").forEach(cb => {
+    cb.checked = localStorage.getItem(cb.id) === "true";
+  });
+  updateAll();
+}
+
+function updateAll(){
+  // update subject bars
+  updateSubjectProgress('p','p-bar','p-percent');
+  updateSubjectProgress('c','c-bar','c-percent');
+  updateSubjectProgress('m','m-bar','m-percent');
+
+  let totalAll = document.querySelectorAll("input[type=checkbox]").length || 1;
+  let totalDone = document.querySelectorAll("input[type=checkbox]:checked").length;
+  let overall = Math.round((totalDone/totalAll)*100);
+  document.getElementById("overall-percent").innerText = overall + "%";
+  document.getElementById("overall-bar").style.width = overall + "%";
+}
+
+function updateSubjectProgress(prefix, barId, textId){
+  let checkboxes = document.querySelectorAll(`input[id^="${prefix}"]`);
+  if(!checkboxes || checkboxes.length===0){
+    document.getElementById(textId).innerText = "0%";
+    document.getElementById(barId).style.width = "0%";
+    return;
+  }
+  let checked = Array.from(checkboxes).filter(c => c.checked).length;
+  let percent = Math.round((checked / checkboxes.length) * 100);
+  document.getElementById(textId).innerText = percent + "%";
+  document.getElementById(barId).style.width = percent + "%";
+}
+
+function suggestNext(){
+  let subjects = [{list: physics, pref:'p', name:'Physics'},{list: chemistry, pref:'c', name:'Chemistry'},{list: maths, pref:'m', name:'Maths'}];
+  let suggestions = [];
+  subjects.forEach(sub=>{
+    for(let i=0;i<sub.list.length;i++){
+      if(!localStorage.getItem(`${sub.pref}${i}_1`) || localStorage.getItem(`${sub.pref}${i}_1`) === "false"){
+        suggestions.push(`${sub.name}: <b>${sub.list[i]}</b>`);
+        break;
+      }
+    }
+  });
+  document.getElementById("suggest-text").innerHTML = suggestions.length ? suggestions.join(" | ") : "All set! Focus on revision.";
+}
+
+/* --- Mock Test Tracker Logic --- */
+let tests = JSON.parse(localStorage.getItem('jee_tests')) || [];
+
+function addTest() {
+  const date = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+  tests.unshift({ date: date, p: 0, c: 0, m: 0 }); // Add new test to top
+  saveTests();
+  renderTests();
+}
+
+function deleteTest(index) {
+  if(confirm("Delete this test entry?")) {
+    tests.splice(index, 1);
+    saveTests();
+    renderTests();
+  }
+}
+
+function updateScore(index, field, val) {
+  tests[index][field] = Number(val) || 0;
+  saveTests();
+  // Update total immediately in DOM
+  const t = tests[index];
+  const total = (t.p||0) + (t.c||0) + (t.m||0);
+  document.getElementById(`total-${index}`).innerText = total;
+}
+
+function saveTests() {
+  localStorage.setItem('jee_tests', JSON.stringify(tests));
+}
+
+function renderTests() {
+  const tbody = document.getElementById('test-list');
+  const msg = document.getElementById('no-tests-msg');
+  if(!tbody) return;
+  
+  if(tests.length === 0) {
+    tbody.innerHTML = '';
+    msg.style.display = 'block';
+    return;
+  }
+  msg.style.display = 'none';
+  
+  tbody.innerHTML = tests.map((t, i) => `
+    <tr style="animation: fadeIn 0.3s ease">
+      <td style="color:#cbd5e1; font-size:0.9rem; text-align:left;">${t.date}</td>
+      <td><input type="number" class="score-input" value="${t.p === 0 ? '' : t.p}" placeholder="0" oninput="updateScore(${i}, 'p', this.value)"></td>
+      <td><input type="number" class="score-input" value="${t.c === 0 ? '' : t.c}" placeholder="0" oninput="updateScore(${i}, 'c', this.value)"></td>
+      <td><input type="number" class="score-input" value="${t.m === 0 ? '' : t.m}" placeholder="0" oninput="updateScore(${i}, 'm', this.value)"></td>
+      <td id="total-${i}" style="font-weight:bold; color:#ffc1cc; font-size:1.1rem;">${(t.p||0)+(t.c||0)+(t.m||0)}</td>
+      <td><button class="del-btn" onclick="deleteTest(${i})" title="Delete">×</button></td>
+    </tr>
+  `).join('');
+}
+
+/* render the syllabus tables */
+const renderTable = (title, list, prefix, delayStart) => {
+  let html = `<h2>${title}</h2>`;
+  html += `<table><thead><tr><th style="text-align:left; padding-left:20px;">Chapter</th><th>Lec</th><th>Notes</th><th>PYQ</th><th>R1</th><th>R2</th></tr></thead><tbody>`;
+
+  list.forEach((ch,i)=>{
+    // Stagger animation for rows
+    const delay = delayStart + (i * 0.03);
+    const style = `animation: slideIn 0.5s ease-out ${delay}s backwards;`;
+
+    // generate 5 checkboxes per chapter
+    const row = `<tr style="${style}"><td style="text-align:left; font-weight:500; color:#fff;">${ch}</td>`+
+      [1,2,3,4,5].map(j => `<td><input type="checkbox" id="${prefix}${i}_${j}" onchange="save(this)" aria-label="${ch} step ${j}"></td>`).join('') +
+      `</tr>`;
+    html += row;
+  });
+  html += `</tbody></table>`;
+  return html;
+};
+
+const container = document.getElementById('syllabus-container');
+let content = "";
+content += renderTable("Physics", physics, "p", 0.5);
+content += renderTable("Chemistry", chemistry, "c", 0.5 + (physics.length * 0.03));
+content += renderTable("Mathematics", maths, "m", 0.5 + ((physics.length + chemistry.length) * 0.03));
+container.innerHTML = content;
+
+/* initialize */
+window.addEventListener('load', ()=>{
+  load();
+  suggestNext();
+  renderTests();
+  // subtle entrance animation for bars (re-trigger)
+  setTimeout(()=>{ document.querySelectorAll('.progress-bar').forEach(b=> b.style.opacity=1); }, 80);
+
+  // Generate Sakura Petals
+  const sakuraContainer = document.getElementById('sakura-container');
+  const petalCount = 30;
+  for(let i=0; i<petalCount; i++){
+    const petal = document.createElement('div');
+    petal.classList.add('sakura');
+    petal.style.left = Math.random() * 100 + '%';
+    petal.style.width = (Math.random() * 10 + 10) + 'px';
+    petal.style.height = petal.style.width;
+    petal.style.animationDuration = (Math.random() * 5 + 8) + 's';
+    petal.style.animationDelay = (Math.random() * 5) + 's';
+    sakuraContainer.appendChild(petal);
+  }
+});
+</script>
+
+<div class="card mock-card max-wide">
+  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+    <h3 style="margin:0; border:none; font-size:1.4rem;">Mock Test Score Tracker</h3>
+    <button onclick="addTest()" class="add-test-btn">+ Add Test</button>
+  </div>
+  
+  <div style="overflow-x:auto;">
+    <table id="test-table">
+      <thead>
+        <tr>
+          <th style="text-align:left">Date</th>
+          <th>Phy</th>
+          <th>Chem</th>
+          <th>Math</th>
+          <th>Total</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="test-list"></tbody>
+    </table>
+    <div id="no-tests-msg" style="text-align:center; padding:20px; color:rgba(255,255,255,0.5); font-style:italic; display:none;">
+      No tests added yet. Click "Add Test" to track your progress!
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
